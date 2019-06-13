@@ -40,7 +40,7 @@ int main() {
     //     cout << F.mapBlk(i) << endl;
     // }
 
-    cout << F.getFileSize() << endl;
+    // cout << F.getFileSize() << endl;
     // char tc[10000];
     // cout << F.f_offset << endl;
     // cout << F.read(tc, 32) << endl;
@@ -89,17 +89,25 @@ int main() {
     cout << F.write(tc, 10000) << endl;
     // cout << F.getFileSize() << endl;
 
-    F.f_offset = 0;
-    cout << F.read(tc_, 10000) << endl;
-    for(int i = 0; i < 10000; i++) {
-        cout << tc_[i] << endl;
-    }
-    
+    F.trunc(5050);
     // cout << F.getBlkNum() << endl;
 
-    // auto x = g_BufferManager.readBuf(211);
-    // for(int i = 0; i < 512; i++) {
-    //     cout << (x -> b_addr)[i] << endl;
+    F.f_offset = 511;
+    cout << F.remove(tc+1, 24) << endl;
+
+    F.f_offset = 0;
+    cout << F.read(tc_, 10000) << endl;
+    for(int i = 500; i < 550; i++) {
+        cout << tc_[i] << endl;
+    }
+
+    // cout << tc[0] << endl;
+    // cout << tc[1] << endl;
+    // cout << tc[25] << endl;
+    // cout << tc[26] << endl;
+
+    // for(int i = 0; i < 3; i++) {
+    //     cout << F.mapBlk(i) << endl;
     // }
     return 0;
 }

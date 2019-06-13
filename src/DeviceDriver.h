@@ -4,6 +4,9 @@ using namespace std;
 #ifndef DEVICEDRIVER
 #define DEVICEDRIVER
 
+/**
+ * 这个类封装了一些对于磁盘文件读写的操作
+ */
 class DeviceDriver {
 private:
     static const char* DISK_FILE_NAME;

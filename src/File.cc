@@ -325,7 +325,7 @@ void File::deleteAll() {
  * 返回读取的字节数
  */
 int File::read(char* content, int length) {
-    const int rest_byte_num = getFileSize() - f_offset; // 文件剩余的大小
+    const int rest_byte_num = max(getFileSize() - f_offset, 0); // 文件剩余的大小
     const int toread_byte_num = min(rest_byte_num, length);
 
     int i;
@@ -380,7 +380,7 @@ int File::read(char* content, int length) {
  * 返回写入的字节数
  */
 int File::write(char* content, int length) {
-    const int rest_byte_num = getFileSize() - f_offset; // f_offset 之后文件剩余的大小
+    const int rest_byte_num = max(getFileSize() - f_offset, 0); // f_offset 之后文件剩余的大小
     const int towrite_byte_num = min(rest_byte_num, length);
     const int append_byte_num = (length - rest_byte_num) > 0? (length - rest_byte_num): 0; // 需要新写入的大小
 
@@ -402,7 +402,7 @@ int File::write(char* content, int length) {
             Buffer* buf = BM -> readBuf(bn);
             char* addr = buf -> b_addr;
 
-            cout << "写入 " << bn << " 块盘块，" << rest_towrite_byte_num << " 字节" << endl;
+            // cout << "写入 " << bn << " 块盘块，" << rest_towrite_byte_num << " 字节" << endl;
             for(i = 0; i < rest_towrite_byte_num; i++) {
                 addr[f_offset % 512 + i] = content[write_byte_count];
                 // cout << "写入字符 " << content[write_byte_count] << endl;
@@ -418,7 +418,7 @@ int File::write(char* content, int length) {
             Buffer* buf = BM -> readBuf(bn);
             char* addr = buf -> b_addr;
 
-            cout << "写入 " << has_write_blk_num << " 块盘块，" << blk_rest_byte_num << " 字节" << endl;
+            // cout << "写入 " << has_write_blk_num << " 块盘块，" << blk_rest_byte_num << " 字节" << endl;
             for(i = 0; i < blk_rest_byte_num; i++) {
                 addr[f_offset % 512 + i] = content[write_byte_count];
                 // cout << "写入字符 " << content[write_byte_count] << endl;
@@ -438,10 +438,19 @@ int File::write(char* content, int length) {
     const int append_all_blk_num = (append_byte_num - append_pre_byte_num) / 512; // 需要新增的盘块数（完整的盘块）
     const int append_aft_byte_num = (append_byte_num - append_pre_byte_num) - 512 * append_all_blk_num; // 需要在写完完整盘块后，仍然需要写入的字节数
 
-    const int pre_bn = mapBlk(has_write_blk_num);
-    Buffer* pre_buf = BM -> readBuf(pre_bn);
+    
+    int pre_bn;
+    Buffer* pre_buf;
+    if(getFileSize() == 0) {
+        // 如果是空文件
+        pre_buf = applyNewBlk();
+        pre_bn = mapBlk(0);
+    } else {
+        pre_bn = mapBlk(has_write_blk_num);
+        pre_buf = BM -> readBuf(pre_bn);
+    }
     char* pre_addr = pre_buf -> b_addr;
-    cout << "写入 " << pre_bn << " 块盘块，" << append_pre_byte_num << " 字节" << endl;
+    // cout << "写入 " << pre_bn << " 块盘块，" << append_pre_byte_num << " 字节" << endl;
     for(int i = 0; i < append_pre_byte_num; i++) {
         pre_addr[f_offset % 512 + i] = content[write_byte_count]; 
         // cout << "写入字符 " << content[write_byte_count] << endl;
@@ -454,7 +463,7 @@ int File::write(char* content, int length) {
         // 每次分配一个盘块
         Buffer* buf = applyNewBlk();
         char* addr = buf -> b_addr;
-        cout << "写入 " << buf -> b_blk_no << " 块盘块，" << 512 << " 字节" << endl;
+        // cout << "写入 " << buf -> b_blk_no << " 块盘块，" << 512 << " 字节" << endl;
         for(j = 0; j < 512; j++) {
             addr[j] = content[write_byte_count]; 
             // cout << "写入字符 " << content[write_byte_count] << endl;
@@ -466,7 +475,7 @@ int File::write(char* content, int length) {
 
     Buffer* aft_buf = applyNewBlk();
     char* aft_addr = aft_buf -> b_addr;
-    cout << "写入 " << aft_buf -> b_blk_no << " 块盘块，" << append_aft_byte_num << " 字节" << endl;
+    // cout << "写入 " << aft_buf -> b_blk_no << " 块盘块，" << append_aft_byte_num << " 字节" << endl;
     for(int i = 0; i < append_aft_byte_num; i++) {
         aft_addr[i] = content[write_byte_count]; 
         // cout << "写入字符 " << content[write_byte_count] << endl;
@@ -490,9 +499,33 @@ int File::write(char* content, int length) {
  * 返回删除的字节数
  */
 int File::remove(char* content, int length) {
-    f_minode -> m_mode |= MemINode::IUPD;
+    const int rest_byte_num = max(getFileSize() - f_offset, 0); // f_offset 之后文件剩余的大小
+    const int tormv_byte_num = min(rest_byte_num, length);
 
-    return -1;
+    if(tormv_byte_num == 0) {
+        return 0;
+    }
+
+    const int of_offset = f_offset; // 记录当前的文件偏移位置
+    char* rest_saver = new char[rest_byte_num];
+    read(rest_saver, rest_byte_num); // 将剩余部分读出
+    trunc(getFileSize() - rest_byte_num); // 保留待删除部分之前的所有内容
+    if(rest_byte_num > tormv_byte_num) {
+        // 如果不需要将后面所有内容都删除，则还需要重新将 rest_saver 的尾部重新写入
+        f_offset = of_offset;
+        write(&rest_saver[tormv_byte_num], rest_byte_num - tormv_byte_num);
+    }
+
+    if(content != nullptr) {
+        for(int i = 0; i < tormv_byte_num; i++) {
+            content[i] = rest_saver[i];
+        }
+    }
+    delete[] rest_saver;
+
+    f_offset = of_offset;
+    f_minode -> m_mode |= MemINode::IUPD;
+    return tormv_byte_num;
 }
 
 /**
@@ -515,7 +548,7 @@ void File::trunc(const int size) {
             int* b_addr1 = (int*)(index1_blk -> b_addr);
 
             for(j = 127; j >= 0; j--) {
-                if(b_addr1[j] != 0) { //  找到最后一个二级索引块
+                if(b_addr1[j] != 0) { // 找到最后一个二级索引块
                     Buffer* index2_blk = BM -> readBuf(b_addr1[j]); // 二级索引块
                     int* b_addr2 = (int*)(index2_blk -> b_addr);
 
@@ -523,20 +556,75 @@ void File::trunc(const int size) {
                         if(b_addr2[k] != 0) { // 找到最后一个盘块
                             FS -> freeBlock(b_addr2[k]);
                             b_addr2[k] = 0;
+                            break;
                         }
                     }
 
                     if(k == 0) {
                         // 如果释放了二级索引块指向的第一块盘块，则二级索引不再需要
-                        
+                        FS -> freeBlock(b_addr1[j]);
+                        b_addr1[j] = 0;
+                        BM -> dwriteBuf(index2_blk);
+                        break;
                     }
-                    BM -> dwriteBuf(index2_blk);
+                    BM -> freeBuf(index2_blk);
                     break;
                 }
             }
 
+            if(j == 0) {
+                // 如果释放了一级索引块指向的第一个盘块，则这个一级索引不再需要
+                FS -> freeBlock(addr[9] != 0? addr[9]: addr[8]);
+                f_minode -> m_mode |= MemINode::IUPD;
+                if(addr[9] != 0) {
+                    addr[9] = 0;
+                } else {
+                    addr[8] = 0;
+                }
+                BM -> dwriteBuf(index1_blk);
+                continue;
+            }
+
             BM -> freeBuf(index1_blk);
             continue;
+        }
+
+        if(addr[7] != 0 || addr[6] != 0) {
+            Buffer* index1_blk = BM -> readBuf(addr[7] != 0? addr[7]: addr[6]); // 一级索引块
+            int* b_addr1 = (int*)(index1_blk -> b_addr);
+
+            for(j = 127; j >= 0; j--) {
+                if(b_addr1[j] != 0) { // 找到最后一个盘块
+                    FS -> freeBlock(b_addr1[j]);
+                    b_addr1[j] = 0;
+                    break;
+                }
+            }
+
+            if(j == 0) {
+                // 如果释放了一级索引块指向的第一个盘块，则这个一级索引不再需要3
+                FS -> freeBlock(addr[7] != 0? addr[7]: addr[6]);
+                f_minode -> m_mode |= MemINode::IUPD;
+                if(addr[7] != 0) {
+                    addr[7] = 0;
+                } else {
+                    addr[6] = 0;
+                }
+                BM -> dwriteBuf(index1_blk);
+                continue;
+            }
+
+            BM -> freeBuf(index1_blk);
+            continue;
+        }
+
+        for(j = 5; j >= 0; j--) {
+            if(addr[j] != 0) { // 找到最后一个直接映射的盘块
+                FS -> freeBlock(addr[j]);
+                f_minode -> m_mode |= MemINode::IUPD;
+                addr[j] = 0;
+                break;
+            }
         }
     }
 

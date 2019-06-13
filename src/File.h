@@ -9,6 +9,10 @@
 #define LARGE_FILE_MOST_BLK 6 + 128 * 2
 #define HUGE_FILE_MOST_BLK 6 + 128 * 2 + 128 * 128 * 2
 
+/**
+ * 这个类主要根据传入的 MemINode 节点打开一个文件
+ * 通过调用这个类提供的方法，可以读写或删除文件内容
+ */
 class File {
 public:
     enum FileType { 
@@ -23,6 +27,7 @@ public:
     int f_offset;
 
 private:
+public:
     /**
      * 为文件新申请一个盘块
      * 返回相应缓存块

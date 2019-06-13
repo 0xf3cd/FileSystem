@@ -9,6 +9,10 @@ using namespace std;
 #define BUF_NUM 100 // 一共 100 个缓冲块
 #define BUF_SIZE 512  // 缓冲区大小 512 字节
 
+/**
+ * 这个类是对缓存块进行管理和调度的类
+ * 提供了方法，能够利用高速缓存读写盘块
+ */
 class BufferManager {
 private: 
     DeviceDriver* DD;
