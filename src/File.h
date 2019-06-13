@@ -12,10 +12,10 @@
 class File {
 public:
     enum FileType { 
-        FDIR = 0x1; // 是否是文件夹
+        FDIR = 0x1 // 是否是文件夹
     };
 
-    * FS;
+    FileSystem* FS;
     BufferManager* BM;
 
     int f_type;
@@ -27,7 +27,13 @@ private:
      * 为文件新申请一个盘块
      * 返回相应缓存块
      */
-    Buffer* applyNewBLlk();
+    Buffer* applyNewBlk();
+
+    /**
+     * 将文件截断
+     * 根据输入，保留文件前面若干字节
+     */
+    void trunc(const int size);
 
 public:
     File(MemINode* minode);
@@ -56,7 +62,7 @@ public:
     /**
      * 删除文件的所有内容
      */
-    void trunc();
+    void deleteAll();
 
     /**
      * 读取文件内容
@@ -73,9 +79,18 @@ public:
     int write(char* content, int length);
 
     /**
+     * 删除文件中一部分内容
+     * 以当前 f_offset 为起始开始删除
+     * 删除的内容保存在 content 中（如果 content 不为 nullptr）
+     * content 为 nullptr 则不保存删除的内容
+     * 返回删除的字节数
+     */
+    int remove(char* content, int length);
+
+    /**
      * 关闭文件
      */
-    void close();
+    // void close();
 };
 
 #endif
