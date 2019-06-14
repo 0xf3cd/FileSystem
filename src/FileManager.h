@@ -121,6 +121,12 @@ public:
     void moveFile(string fname, FileManager* des_f);
 
     /**
+     * 传入相对地址，返回对应文件的 inode 编号
+     * ！调用前需检查当前文件是否为文件夹！
+     */
+    int getFileIno(string addr);
+
+    /**
      * 得到文件读写指针地址
      */
     int getFOffset();

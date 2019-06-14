@@ -6,9 +6,12 @@
 #include "DirectoryEntry.h"
 #include "File.h"
 #include "FileManager.h"
+#include "FileOperator.h"
+#include "UserInterface.h"
 
 #include <iostream>
-#include <string.h>
+#include <string>
+#include <fstream>
 
 DeviceDriver g_DeviceDriver;
 SuperBlock g_SuperBlock;
@@ -16,39 +19,157 @@ BufferManager g_BufferManager;
 FileSystem g_FileSystem;
 INodeManager g_INodeManager;
 
+const string text_dir = "./example/text.txt";
+const string report_dir = "./example/report.pdf";
+const string photo_dir = "./example/photo.jpg";
+
+void initialize(FileOperator& FO);
+void JerryTest(FileOperator& FO);
+
 int main() {
-    g_FileSystem.formatDisk();
 
-    MemINode* proot = g_INodeManager.readDINode(0);
-    g_INodeManager.writeBackMINode(proot);
-    
-    FileManager FM;
+    FileOperator FO;
+    FO.format();
 
-    cout << FM.createFile("temp1") << endl;
-    cout << FM.createFile("folder", true) << endl;
-    cout << FM.createFile("temp2") << endl;
+    FO.mkdir("bin");
+    FO.mkdir("etc");
+    FO.mkdir("home");
+    FO.mkdir("dev");
 
-    FM.renameFile("temp2", "temp2_");
-    FMAP* item_map = FM.loadItems();
-    FMAP::iterator it;
-    for(it = item_map -> begin(); it != item_map -> end(); it++) {
-        cout << it -> first << ", " << it -> second << endl;
-    }
-    cout << item_map -> size() << endl;
+    FO.cd("home");
+    FO.mkdir("texts");
+    FO.mkdir("reports");
+    FO.mkdir("photos");
+
+    initialize(FO); // 读入三个文件
+    cout << "已将三个文件读入二级文件系统内" << endl;
+    FO.goroot(); // 回到根目录
+
+    JerryTest(FO); // 新建 test/Jerry 并进行文件读写测试
+    FO.goroot(); // 回到根目录
+
     cout << endl;
-    delete item_map;
+    UserInterface UI(&FO);
+    UI.start(); // 开始接收用户输入
 
-    FileManager FM2(2);
-    FM.copyFile("temp2_", &FM2);
-    cout << FM2.createFile("temp11") << endl;
-    cout << FM2.createFile("folder1", true) << endl;
-    cout << FM2.createFile("temp21") << endl;
+    return 0;
+}
 
-    FMAP* item_map2 = FM2.loadItems();
-    for(it = item_map2 -> begin(); it != item_map2 -> end(); it++) {
-        cout << it -> first << ", " << it -> second << endl;
+void initialize(FileOperator& FO) {
+    int i;
+    ifstream fin;
+    char buf[512];
+
+    FO.cd("texts");
+    fin.open(text_dir, ios::in | ios::binary);
+    if(fin.is_open()) {
+        fin.seekg(0, ios::end);
+        int text_size = fin.tellg();
+        fin.seekg(0, ios::beg);
+
+        FO.fcreate("text.txt");
+        FO.fopen("text.txt");
+
+        const int full_blk_num = text_size / 512;
+        const int rest_byte_num = text_size % 512;
+        for(i = 0; i < full_blk_num; i++) {
+            fin.read(buf, 512);
+            FO.fwrite(buf, 512);
+        }
+        if(rest_byte_num) {
+            fin.read(buf, rest_byte_num);
+            FO.fwrite(buf, rest_byte_num);
+        }
+
+        FO.fclose();
+        fin.close();
+    } else {
+        cout << "txt 文件无法打开，请检查路径" << endl;
     }
-    cout << item_map2 -> size() << endl;
+    FO.cd("..");
+
+    FO.cd("reports");
+    fin.open(text_dir, ios::in | ios::binary);
+    if(fin.is_open()) {
+        fin.seekg(0, ios::end);
+        int text_size = fin.tellg();
+        fin.seekg(0, ios::beg);
+
+        FO.fcreate("reports.pdf");
+        FO.fopen("reports.pdf");
+
+        const int full_blk_num = text_size / 512;
+        const int rest_byte_num = text_size % 512;
+        for(i = 0; i < full_blk_num; i++) {
+            fin.read(buf, 512);
+            FO.fwrite(buf, 512);
+        }
+        if(rest_byte_num) {
+            fin.read(buf, rest_byte_num);
+            FO.fwrite(buf, rest_byte_num);
+        }
+
+        FO.fclose();
+        fin.close();
+    } else {
+        cout << "pdf 文件无法打开，请检查路径" << endl;
+    }
+    FO.cd("..");
+
+    FO.cd("photos");
+    fin.open(text_dir, ios::in | ios::binary);
+    if(fin.is_open()) {
+        fin.seekg(0, ios::end);
+        int text_size = fin.tellg();
+        fin.seekg(0, ios::beg);
+
+        FO.fcreate("photos.jpg");
+        FO.fopen("photos.jpg");
+
+        const int full_blk_num = text_size / 512;
+        const int rest_byte_num = text_size % 512;
+        for(i = 0; i < full_blk_num; i++) {
+            fin.read(buf, 512);
+            FO.fwrite(buf, 512);
+        }
+        if(rest_byte_num) {
+            fin.read(buf, rest_byte_num);
+            FO.fwrite(buf, rest_byte_num);
+        }
+
+        FO.fclose();
+        fin.close();
+    } else {
+        cout << "jpg 文件无法打开，请检查路径" << endl;
+    }
+    FO.cd("..");
+}
+
+void JerryTest(FileOperator& FO) {
+    char buf[800];
+    char read_out[20];
+    int i;
+    for(i = 0; i < 800; i++) {
+        buf[i] = 'a' + i % 26;
+    }
+
+    FO.mkdir("test");
+    FO.cd("test");
+    FO.fcreate("Jerry");
+    FO.fopen("Jerry");
+    cout << "/test/Jerry 创建成功" << endl; 
+
+    FO.fwrite(buf, 800);
+    cout << "向 Jerry 写入 800 字节" << endl; 
+
+    FO.flseek(500); // 就读写指针定位到 500 字节
+    FO.fread(read_out, 20);
+    cout << "从 Jerry 500 字节开始读出 20 字节" << endl;
+    FO.fclose();
+
+    cout << "这 20 字节为：" << endl;
+    for(i = 0; i < 20; i++) {
+        cout << read_out[i];
+    }
     cout << endl;
-    delete item_map2;
 }

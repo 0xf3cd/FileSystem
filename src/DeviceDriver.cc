@@ -1,6 +1,6 @@
 #include "DeviceDriver.h"
 
-const char* DeviceDriver::DISK_FILE_NAME = "a.txt"; // "./disk.img";
+const char* DeviceDriver::DISK_FILE_NAME = "./disk.img";
 
 DeviceDriver::DeviceDriver() {
     fs.open(DISK_FILE_NAME, ios::binary | ios::out | ios::in);

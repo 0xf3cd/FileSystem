@@ -493,6 +493,8 @@ int File::write(char* content, int length) {
         f_minode -> m_mode |= MemINode::IUPD;
     }
     
+    f_offset += append_pre_byte_num + append_all_blk_num + append_aft_byte_num;
+
     return write_byte_count;
 }
 

@@ -8,6 +8,7 @@ int main() {
     p = temp;
     cout << p.length() << endl;
     cout << p << endl;
+    cout << (p[p.length()] == '\0') << endl;
 
     return 0;
 }
