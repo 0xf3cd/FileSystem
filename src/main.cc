@@ -1,6 +1,6 @@
 #include "DeviceDriver.h"
 #include "INode.h"
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include "BufferManager.h"
 #include "INodeManager.h"
 #include "DirectoryEntry.h"
@@ -16,7 +16,7 @@
 DeviceDriver g_DeviceDriver;
 SuperBlock g_SuperBlock;
 BufferManager g_BufferManager;
-FileSystem g_FileSystem;
+SuperBlockManager g_SuperBlockManager;
 INodeManager g_INodeManager;
 
 const string text_dir = "./example/text.txt";

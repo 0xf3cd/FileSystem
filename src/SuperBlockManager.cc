@@ -1,4 +1,4 @@
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include "DeviceDriver.h"
 #include "SuperBlock.h"
 #include "INode.h"
@@ -12,21 +12,21 @@ extern DeviceDriver g_DeviceDriver;
 extern SuperBlock g_SuperBlock;
 extern BufferManager g_BufferManager;
 
-FileSystem::FileSystem() {
+SuperBlockManager::SuperBlockManager() {
     DD = &g_DeviceDriver;
     SB = &g_SuperBlock;
     BM = &g_BufferManager;
     loadSuperBlock();
 }
 
-FileSystem::~FileSystem() {
+SuperBlockManager::~SuperBlockManager() {
     saveSuperBlock();
 }
 
 /**
  * 读取磁盘中的 SuperBlock 
  */
-void FileSystem::loadSuperBlock() {
+void SuperBlockManager::loadSuperBlock() {
     SuperBlock new_SB;
     DD -> read((char*)&new_SB, 1024, 0);
     *SB = new_SB;
@@ -35,7 +35,7 @@ void FileSystem::loadSuperBlock() {
 /**
  * 保存 SuperBlock 到磁盘
  */
-void FileSystem::saveSuperBlock() {
+void SuperBlockManager::saveSuperBlock() {
     if(SB -> s_dirty) {
         SB -> s_dirty = 0;
         DD -> write((char*)SB, 1024, 0);
@@ -46,7 +46,7 @@ void FileSystem::saveSuperBlock() {
  * 重置 SuperBlock 中空闲盘块的相关记录信息
  * 使用成组链接法
  */
-void FileSystem::resetFreeBlockInfo() {
+void SuperBlockManager::resetFreeBlockInfo() {
     int disk_num = DISK_BLOCK_NUM - (2 + INODE_NUM / 8);
     int group_num = disk_num / 100; // 分成的组数，每一组 100 个空闲盘块
     int rest_num = disk_num % 100;
@@ -102,7 +102,7 @@ void FileSystem::resetFreeBlockInfo() {
  * 为清空后的磁盘进行根目录创建工作
  * 创建外存 inode，并创建好相关 DirectoryEntry 项（如 . ..）
  */
-void FileSystem::createRootDir() {
+void SuperBlockManager::createRootDir() {
     const int ino = allocDiskINode();
     Buffer* blk = allocBlock();
     int bno = blk -> b_blk_no;
@@ -134,7 +134,7 @@ void FileSystem::createRootDir() {
  * 检查一个外存 inode 是否已经分配
  * 传入 inode 节点标号
  */
-bool FileSystem::hasAllocedDINode(int ino) {
+bool SuperBlockManager::hasAllocedDINode(int ino) {
     const unsigned char one = 1;
     int row, col;
 
@@ -149,7 +149,7 @@ bool FileSystem::hasAllocedDINode(int ino) {
  * 分配一个 inode 节点
  * 返回外存 inode 编号
  */
-int FileSystem::allocDiskINode() {
+int SuperBlockManager::allocDiskINode() {
     const int bitmap_size = IBITMAP_SIZE;
     int i, j;
 
@@ -183,7 +183,7 @@ int FileSystem::allocDiskINode() {
  * 释放一个 inode 节点
  * 传入 inode 节点编号
  */
-void FileSystem::freeDiskINode(int no) {
+void SuperBlockManager::freeDiskINode(int no) {
     const unsigned char one = 1;
     int row, col;
 
@@ -197,7 +197,7 @@ void FileSystem::freeDiskINode(int no) {
  * 分配一个 block 盘块
  * 返回一个缓存块的指针
  */
-Buffer* FileSystem::allocBlock() {
+Buffer* SuperBlockManager::allocBlock() {
     Buffer* buf;
     int i;
 
@@ -231,7 +231,7 @@ Buffer* FileSystem::allocBlock() {
  * 释放一个盘块
  * 传入盘块编号
  */
-void FileSystem::freeBlock(int no) {
+void SuperBlockManager::freeBlock(int no) {
     Buffer* buf;
     SB -> s_dirty = 1;
 
@@ -256,7 +256,7 @@ void FileSystem::freeBlock(int no) {
 /**
  * 格式化整个磁盘
  */
-void FileSystem::formatDisk() {
+void SuperBlockManager::formatDisk() {
     char temp[512] = {0};
     int i;
 

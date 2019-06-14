@@ -1,7 +1,7 @@
 #ifndef FILEMANAGER
 #define FILEMANAGER
 
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include "BufferManager.h"
 #include "INodeManager.h"
 #include "File.h"
@@ -20,7 +20,7 @@ typedef map<string, int> FMAP; // 文件名到外存 inode 号的映射
  */
 class FileManager {
 private:
-    FileSystem* FS; 
+    SuperBlockManager* SBM; 
     BufferManager* BM;
     INodeManager* IM; // 用于申请新的内存快
     File* file;

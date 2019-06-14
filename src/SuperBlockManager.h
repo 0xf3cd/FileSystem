@@ -4,14 +4,14 @@
 #include "./BufferManager.h"
 #include "./DirectoryEntry.h"
 
-#ifndef FILESYSTEM
-#define FILESYSTEM
+#ifndef SUPERBLOCKMANAGER
+#define SUPERBLOCKMANAGER
 
 /**
  * 这个类提供了对 SuperBlock 管理的各方法
  * 提供格式化磁盘、分配外存 inode 节点、分配一个盘块等方法
  */
-class FileSystem {
+class SuperBlockManager {
 private:
     DeviceDriver* DD;
     SuperBlock* SB;
@@ -41,8 +41,8 @@ private:
     void createRootDir();
 
 public: 
-    FileSystem();
-    ~FileSystem();
+    SuperBlockManager();
+    ~SuperBlockManager();
 
     /**
      * 格式化整个磁盘

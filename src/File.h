@@ -3,7 +3,7 @@
 
 #include "INode.h"
 #include "BufferManager.h"
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 
 #define SMALL_FILE_MOST_BLK 6
 #define LARGE_FILE_MOST_BLK 6 + 128 * 2
@@ -19,7 +19,7 @@ public:
         FDIR = 0x1 // 是否是文件夹
     };
 
-    FileSystem* FS;
+    SuperBlockManager* SBM;
     BufferManager* BM;
 
     int f_type;
@@ -91,11 +91,6 @@ public:
      * 返回删除的字节数
      */
     int remove(char* content, int length);
-
-    /**
-     * 关闭文件
-     */
-    // void close();
 };
 
 #endif

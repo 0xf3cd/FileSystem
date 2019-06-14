@@ -1,7 +1,7 @@
 #ifndef FILEOPERATOR
 #define FILEOPERATOR
 
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include "FileManager.h"
 #include <set>
 #include <string.h>
@@ -11,7 +11,7 @@
  */
 class FileOperator {
 private:
-    FileSystem* FS;
+    SuperBlockManager* SBM;
     string cur_dir; // 当前的路径
     FileManager* cdir_fm; // 管理当前路径
     FileManager* ofile_fm; // 管理当前打开的文件
@@ -124,11 +124,6 @@ public:
      * 回到根目录
      */
     void goroot();
-
-    /**
-     * 判断某个文件是否是文件夹
-     */
-    // bool isFolder(string fld_name);
 };
 
 #endif

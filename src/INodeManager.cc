@@ -1,17 +1,17 @@
 #include "INodeManager.h"
 #include "BufferManager.h"
 #include "DeviceDriver.h"
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include <iostream>
 
 extern BufferManager g_BufferManager;
 extern DeviceDriver g_DeviceDriver;
-extern FileSystem g_FileSystem;
+extern SuperBlockManager g_SuperBlockManager;
 
 INodeManager::INodeManager() {
     BM = &g_BufferManager;
     DD = &g_DeviceDriver;
-    FS = &g_FileSystem;
+    SBM = &g_SuperBlockManager;
 }
 
 INodeManager::~INodeManager() {
@@ -31,7 +31,7 @@ MemINode* INodeManager::readDINode(int ino) {
     MemINode* minode;
 
     // cout << Iset.size() << endl;
-    if(!FS -> hasAllocedDINode(ino)) {
+    if(!SBM -> hasAllocedDINode(ino)) {
         cout << ino << " 外存 inode 未被使用！" << endl;
         return nullptr; // 如果外存 inode 未被分配，则返回空指针
     }
@@ -57,7 +57,7 @@ MemINode* INodeManager::readDINode(int ino) {
  * 分配一个新的内存 inode
  */
 MemINode* INodeManager::getNewMINode() {
-    const int ino = FS -> allocDiskINode();
+    const int ino = SBM -> allocDiskINode();
     DiskINode dinode;
     dinode.d_mode |= DiskINode::IALLOC;
 

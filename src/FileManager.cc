@@ -1,5 +1,5 @@
 #include "FileManager.h"
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include "BufferManager.h"
 #include "INodeManager.h"
 #include "File.h"
@@ -11,7 +11,7 @@
 #include <vector>
 #include <algorithm>
 
-extern FileSystem g_FileSystem;
+extern SuperBlockManager g_SuperBlockManager;
 extern BufferManager g_BufferManager;
 extern INodeManager g_INodeManager;
 
@@ -64,7 +64,7 @@ File* FileManager::openFile(int ino) {
 }
 
 FileManager::FileManager() { // 默认打开根目录
-    FS = &g_FileSystem;
+    SBM = &g_SuperBlockManager;
     BM = &g_BufferManager;
     IM = &g_INodeManager;
     int ino = ROOT_INO;
@@ -72,7 +72,7 @@ FileManager::FileManager() { // 默认打开根目录
 }
 
 FileManager::FileManager(int ino) { // 打开 ino 对应的 inode 块对应的文件
-    FS = &g_FileSystem;
+    SBM = &g_SuperBlockManager;
     BM = &g_BufferManager;
     IM = &g_INodeManager;
     file = openFile(ino);
@@ -284,7 +284,7 @@ void FileManager::deleteNormalFile(string fname) {
     // 否则需要释放外存 inode
     // cout << "!" << dino << endl;
     IM -> freeMINode(minode);
-    FS -> freeDiskINode(dino); // 释放外存的 inode
+    SBM -> freeDiskINode(dino); // 释放外存的 inode
 }
 
 /**
@@ -317,7 +317,7 @@ void FileManager::deleteFolder(string fname, bool force_del) {
             // 如果 fname 这个文件夹中没有其他文件
             // 可以直接删除
             deleteItem(fname);
-            FS -> freeDiskINode(dino); // 释放外存的 inode
+            SBM -> freeDiskINode(dino); // 释放外存的 inode
             IM -> freeMINode(minode);
             delete item_map; 
             return;

@@ -1,16 +1,16 @@
 #include "FileOperator.h"
 #include "FileManager.h"
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 
-extern FileSystem g_FileSystem;
+extern SuperBlockManager g_SuperBlockManager;
 extern vector<string> split(const string&, const string&);
 
 FileOperator::FileOperator() {
-    FS = &g_FileSystem;
+    SBM = &g_SuperBlockManager;
     cur_dir = "/";
     cdir_fm = new FileManager;
     ofile_fm = nullptr;
@@ -38,7 +38,7 @@ void FileOperator::format() {
         delete ofile_fm;
     }
 
-    FS -> formatDisk();
+    SBM -> formatDisk();
     cur_dir = "/";
     cdir_fm = new FileManager;
     ofile_fm = nullptr;
@@ -338,13 +338,13 @@ int FileOperator::cp(string f_name, string des_name) {
         return -2; // 不存在 des_name
     }
 
-    FileManager fromFM(from_ino);
+    // FileManager fromFM(from_ino);
     FileManager toFM(to_ino);
     if(!toFM.isFolder()) {
         return -3; // des_name 不是文件夹
     }
 
-    fromFM.copyFile(".", &toFM);
+    cdir_fm -> copyFile(f_name, &toFM);
     return 0;
 }
 
@@ -361,12 +361,12 @@ int FileOperator::mv(string f_name, string des_name) {
         return -2; // 不存在 des_name
     }
 
-    FileManager fromFM(from_ino);
+    // FileManager fromFM(from_ino);
     FileManager toFM(to_ino);
     if(!toFM.isFolder()) {
         return -3; // des_name 不是文件夹
     }
 
-    fromFM.moveFile(".", &toFM);
+    cdir_fm -> moveFile(f_name, &toFM);
     return 0;
 }

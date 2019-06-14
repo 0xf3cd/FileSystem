@@ -76,10 +76,6 @@ public:
      * 将延迟写的缓存块中的内容全部写入磁盘
      */
 	void flushAllBuf();
-
-    /**
-     * 
-     */
 };
 
 #endif

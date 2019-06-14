@@ -9,8 +9,6 @@ class SuperBlock {
 public:
     int s_isize; // inode 总个数
     char s_ibitmap[IBITMAP_SIZE]; // 记录 inode 分配情况的位图
-    // int s_ninode; // 直接管理的空闲的 inode 数量
-    // int s_inode[100]; // 直接管理的空闲的 inode 的索引表
     int s_ilock; // 临界区锁
 
     int s_fsize; // 盘块总数
@@ -24,11 +22,6 @@ public:
 
 public:
     SuperBlock();
-
-    /**
-     * 格式化超级块
-     */
-    // void format();
 };
 
 #endif

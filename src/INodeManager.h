@@ -4,7 +4,7 @@
 #include "INode.h"
 #include "BufferManager.h"
 #include "DeviceDriver.h"
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include <set>
 using namespace std;
 
@@ -19,7 +19,7 @@ private:
     set<MemINode*> Iset;
     BufferManager* BM;
     DeviceDriver* DD;
-    FileSystem* FS;
+    SuperBlockManager* SBM;
 
 public:
     INodeManager();

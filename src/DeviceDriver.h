@@ -24,14 +24,12 @@ public:
     /**
      * 将 buf 中的内容写入磁盘
      * offset 指字节数
-     * 出错返回 false，否则返回 true
      */
     void write(const char* buf, const int buf_size, const int offset);
 
     /**
      * 将磁盘中的内容读入 buf
      * offset 指字节数
-     * 出错返回 false，否则返回 true
      */
     void read(char* buf, const int buf_size, const int offset);
 };

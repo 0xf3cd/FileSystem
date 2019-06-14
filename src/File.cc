@@ -1,17 +1,17 @@
 #include "INode.h"
 #include "BufferManager.h"
-#include "FileSystem.h"
+#include "SuperBlockManager.h"
 #include "File.h"
 #include <iostream>
 #include <string.h>
 #include <math.h>
 
 extern BufferManager g_BufferManager;
-extern FileSystem g_FileSystem;
+extern SuperBlockManager g_SuperBlockManager;
 
 File::File(MemINode* minode) {
     BM = &g_BufferManager;
-    FS = &g_FileSystem;
+    SBM = &g_SuperBlockManager;
 
     f_type = 0;
     if(minode -> m_mode & MemINode::IFDIR) {
@@ -66,7 +66,7 @@ Buffer* File::applyNewBlk() {
 
     f_minode -> m_mode |= MemINode::IUPD; // 需要更新 INode
 
-    Buffer* new_buf = FS -> allocBlock(); // 新分配的盘块
+    Buffer* new_buf = SBM -> allocBlock(); // 新分配的盘块
     const int new_blk_no = new_buf -> b_blk_no;
     int* addr = f_minode -> m_addr;
 
@@ -77,7 +77,7 @@ Buffer* File::applyNewBlk() {
         const int indexed_blk_num = pre_blk_num + 1 - 6; // 除去前六个盘块，需要进行索引的盘块数
         if(indexed_blk_num % 128 == 1) {
             // 如果在某个索引块未被创建
-            Buffer* new_index_blk = FS -> allocBlock();
+            Buffer* new_index_blk = SBM -> allocBlock();
             const int new_index_blk_no = new_index_blk -> b_blk_no;
 
             if(indexed_blk_num > 128) {
@@ -106,7 +106,7 @@ Buffer* File::applyNewBlk() {
         const int indexed_blk_num = pre_blk_num + 1 - 6 - 128 * 2; // 除去前面不需要索引及一级索引的盘块，需要进行索引的盘块数
         if(indexed_blk_num % (128 * 128) == 1) {
             // 如果一级索引块未被创建
-            Buffer* new_index1_blk = FS -> allocBlock();
+            Buffer* new_index1_blk = SBM -> allocBlock();
             const int new_index1_blk_no = new_index1_blk -> b_blk_no;
 
             if(indexed_blk_num > 128*128) {
@@ -122,7 +122,7 @@ Buffer* File::applyNewBlk() {
 
         if(indexed_blk_num % 128 == 1) {
             // 如果二级索引块未被创建
-            Buffer* new_index2_blk = FS -> allocBlock();
+            Buffer* new_index2_blk = SBM -> allocBlock();
             const int new_index2_blk_no = new_index2_blk -> b_blk_no;
 
             Buffer* index1_blk; // 一级索引块
@@ -235,7 +235,7 @@ void File::deleteAll() {
 
     for(i = 0; i < blk_num; i++) {
         int blk_to_free = mapBlk(i);
-        FS -> freeBlock(blk_to_free);
+        SBM -> freeBlock(blk_to_free);
     }
 
     // 接下来清除索引节点
@@ -247,11 +247,11 @@ void File::deleteAll() {
             if(indexed_blk[j] == 0) {
                 break;
             }
-            FS -> freeBlock(indexed_blk[j]);
+            SBM -> freeBlock(indexed_blk[j]);
         }
 
         BM -> freeBuf(index1_blk);
-        FS -> freeBlock(addr[6]);
+        SBM -> freeBlock(addr[6]);
     }
 
     if(addr[7] != 0) {
@@ -261,11 +261,11 @@ void File::deleteAll() {
             if(indexed_blk[j] == 0) {
                 break;
             }
-            FS -> freeBlock(indexed_blk[j]);
+            SBM -> freeBlock(indexed_blk[j]);
         }
 
         BM -> freeBuf(index1_blk);
-        FS -> freeBlock(addr[7]);
+        SBM -> freeBlock(addr[7]);
     }
 
     if(addr[8] != 0) {
@@ -282,15 +282,15 @@ void File::deleteAll() {
                 if(indexed2_blk[j] == 0) {
                     break;
                 }
-                FS -> freeBlock(indexed2_blk[k]);
+                SBM -> freeBlock(indexed2_blk[k]);
             }
 
             BM -> freeBuf(index2_blk);
-            FS -> freeBlock(indexed1_blk[j]);
+            SBM -> freeBlock(indexed1_blk[j]);
         }
 
         BM -> freeBuf(index1_blk);
-        FS -> freeBlock(addr[8]);
+        SBM -> freeBlock(addr[8]);
     }
 
     if(addr[9] != 0) {
@@ -307,15 +307,15 @@ void File::deleteAll() {
                 if(indexed2_blk[j] == 0) {
                     break;
                 }
-                FS -> freeBlock(indexed2_blk[k]);
+                SBM -> freeBlock(indexed2_blk[k]);
             }
 
             BM -> freeBuf(index2_blk);
-            FS -> freeBlock(indexed1_blk[j]);
+            SBM -> freeBlock(indexed1_blk[j]);
         }
 
         BM -> freeBuf(index1_blk);
-        FS -> freeBlock(addr[9]);
+        SBM -> freeBlock(addr[9]);
     }
 
     f_minode -> m_size = 0;
@@ -561,7 +561,7 @@ void File::trunc(const int size) {
 
                     for(k = 127; k >= 0; k--) {
                         if(b_addr2[k] != 0) { // 找到最后一个盘块
-                            FS -> freeBlock(b_addr2[k]);
+                            SBM -> freeBlock(b_addr2[k]);
                             b_addr2[k] = 0;
                             break;
                         }
@@ -569,7 +569,7 @@ void File::trunc(const int size) {
 
                     if(k == 0) {
                         // 如果释放了二级索引块指向的第一块盘块，则二级索引不再需要
-                        FS -> freeBlock(b_addr1[j]);
+                        SBM -> freeBlock(b_addr1[j]);
                         b_addr1[j] = 0;
                         BM -> dwriteBuf(index2_blk);
                         break;
@@ -581,7 +581,7 @@ void File::trunc(const int size) {
 
             if(j == 0) {
                 // 如果释放了一级索引块指向的第一个盘块，则这个一级索引不再需要
-                FS -> freeBlock(addr[9] != 0? addr[9]: addr[8]);
+                SBM -> freeBlock(addr[9] != 0? addr[9]: addr[8]);
                 f_minode -> m_mode |= MemINode::IUPD;
                 if(addr[9] != 0) {
                     addr[9] = 0;
@@ -602,7 +602,7 @@ void File::trunc(const int size) {
 
             for(j = 127; j >= 0; j--) {
                 if(b_addr1[j] != 0) { // 找到最后一个盘块
-                    FS -> freeBlock(b_addr1[j]);
+                    SBM -> freeBlock(b_addr1[j]);
                     b_addr1[j] = 0;
                     break;
                 }
@@ -610,7 +610,7 @@ void File::trunc(const int size) {
 
             if(j == 0) {
                 // 如果释放了一级索引块指向的第一个盘块，则这个一级索引不再需要3
-                FS -> freeBlock(addr[7] != 0? addr[7]: addr[6]);
+                SBM -> freeBlock(addr[7] != 0? addr[7]: addr[6]);
                 f_minode -> m_mode |= MemINode::IUPD;
                 if(addr[7] != 0) {
                     addr[7] = 0;
@@ -627,7 +627,7 @@ void File::trunc(const int size) {
 
         for(j = 5; j >= 0; j--) {
             if(addr[j] != 0) { // 找到最后一个直接映射的盘块
-                FS -> freeBlock(addr[j]);
+                SBM -> freeBlock(addr[j]);
                 f_minode -> m_mode |= MemINode::IUPD;
                 addr[j] = 0;
                 break;
