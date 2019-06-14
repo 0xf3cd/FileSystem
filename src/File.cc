@@ -317,6 +317,11 @@ void File::deleteAll() {
         BM -> freeBuf(index1_blk);
         FS -> freeBlock(addr[9]);
     }
+
+    f_minode -> m_size = 0;
+    for(i = 0; i < 10; i++) {
+        (f_minode -> m_addr)[i] = 0;
+    }
 }
 
 /**

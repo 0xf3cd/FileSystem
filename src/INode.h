@@ -48,7 +48,6 @@ public:
     int m_atime; // 最后访问时间
     int m_mtime; // 最后修改时间
 
-    int m_dirty; // 内存 inode 是否被修改过
     int m_number; // 外存对应的 inode 编号 
 
     // short m_dev; // 设备号

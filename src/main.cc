@@ -5,6 +5,7 @@
 #include "INodeManager.h"
 #include "DirectoryEntry.h"
 #include "File.h"
+#include "FileManager.h"
 
 #include <iostream>
 #include <string.h>
@@ -20,94 +21,34 @@ int main() {
 
     MemINode* proot = g_INodeManager.readDINode(0);
     g_INodeManager.writeBackMINode(proot);
+    
+    FileManager FM;
 
-    // Buffer* rootblk = g_BufferManager.readBuf(proot -> m_addr[0]);
-    // DirectoryEntry dir[2];
-    // memcpy((char*)dir, rootblk -> b_addr, 64);
-    // cout << dir[0].fname << ' ' << dir[0].ino << endl;
-    // cout << dir[1].fname << ' ' << dir[1].ino << endl;
+    cout << FM.createFile("temp1") << endl;
+    cout << FM.createFile("folder", true) << endl;
+    cout << FM.createFile("temp2") << endl;
 
-    MemINode* newfile = g_INodeManager.getNewMINode();
-    File F(newfile);
-    // proot -> m_mode |= MemINode::IUPD;
-    // for(int i = 0; i < 6 + 128*2 +128*128*2 - 1 ; i++) {
-    //     Buffer* temp = F.applyNewBlk();
-    //     proot -> m_size += 512; // 模拟写入 512 字节
-    //     g_BufferManager.writeBuf(temp);
-    // }
-
-    // for(int i = 0; i < 6 + 128*2 + 128*128*2; i++) {
-    //     cout << F.mapBlk(i) << endl;
-    // }
-
-    // cout << F.getFileSize() << endl;
-    // char tc[10000];
-    // cout << F.f_offset << endl;
-    // cout << F.read(tc, 32) << endl;
-    // cout << endl;
-
-    // cout << F.f_offset << endl;
-    // cout << F.read(tc, 64) << endl;
-    // cout << endl;
-
-    // cout << F.f_offset << endl;
-    // cout << F.read(tc, 500) << endl;
-    // cout << endl;
-
-    // cout << F.f_offset << endl;
-    // cout << F.read(tc, 946) << endl;
-    // cout << endl;
-
-    // cout << F.f_offset << endl;
-    // cout << F.read(tc, 4615) << endl;
-    // cout << endl;
-
-    // cout << F.f_offset << endl;
-    // cout << F.read(tc, 2) << endl;
-    // cout << endl;
-
-    // cout << F.f_offset << endl;
-
-    // char tc[64];
-    // tc[0] = 'a';
-    // tc[1] = '*';
-    // tc[2] = 'z';
-    // tc[3] = '.';
-    // cout << F.write(tc, 4) << endl;
-
-    char tc[10000];
-    char tc_[10000];
-
-    for(int i = 0; i < 10000; i++) {
-        tc[i] = 'a' + i % 26;
+    FM.renameFile("temp2", "temp2_");
+    FMAP* item_map = FM.loadItems();
+    FMAP::iterator it;
+    for(it = item_map -> begin(); it != item_map -> end(); it++) {
+        cout << it -> first << ", " << it -> second << endl;
     }
-    // for(int i = 0; i < 10000; i++) {
-    //     cout << tc[i] << endl;
-    // }
+    cout << item_map -> size() << endl;
+    cout << endl;
+    delete item_map;
 
-    F.f_offset = 0;
-    cout << F.write(tc, 10000) << endl;
-    // cout << F.getFileSize() << endl;
+    FileManager FM2(2);
+    FM.copyFile("temp2_", &FM2);
+    cout << FM2.createFile("temp11") << endl;
+    cout << FM2.createFile("folder1", true) << endl;
+    cout << FM2.createFile("temp21") << endl;
 
-    F.trunc(5050);
-    // cout << F.getBlkNum() << endl;
-
-    F.f_offset = 511;
-    cout << F.remove(tc+1, 24) << endl;
-
-    F.f_offset = 0;
-    cout << F.read(tc_, 10000) << endl;
-    for(int i = 500; i < 550; i++) {
-        cout << tc_[i] << endl;
+    FMAP* item_map2 = FM2.loadItems();
+    for(it = item_map2 -> begin(); it != item_map2 -> end(); it++) {
+        cout << it -> first << ", " << it -> second << endl;
     }
-
-    // cout << tc[0] << endl;
-    // cout << tc[1] << endl;
-    // cout << tc[25] << endl;
-    // cout << tc[26] << endl;
-
-    // for(int i = 0; i < 3; i++) {
-    //     cout << F.mapBlk(i) << endl;
-    // }
-    return 0;
+    cout << item_map2 -> size() << endl;
+    cout << endl;
+    delete item_map2;
 }

@@ -175,6 +175,7 @@ int FileSystem::allocDiskINode() {
         cout << "外存 inode 节点用尽" << endl;
     }
     // cout << ino << endl;
+    // cout << "分配" << ino << endl;
     return ino;
 }
 

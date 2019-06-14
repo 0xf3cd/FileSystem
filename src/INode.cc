@@ -39,7 +39,6 @@ void MemINode::readDiskINode(DiskINode dinode) {
     m_atime = dinode.d_atime; // 最后访问时间
     m_mtime = dinode.d_mtime; // 最后修改时间
 
-    m_dirty = 0;
     m_count = 0;
     // m_number
     // m_lastr

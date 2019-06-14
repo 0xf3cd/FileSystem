@@ -1,34 +1,13 @@
-#ifndef DEVICEDRIVER
-#define DEVICEDRIVER
-#include "./DeviceDriver.h"
-#endif
-
-#ifndef DISKINODE
-#define DISKINODE
-#include "./DiskINode.h"
-#endif
-
-#ifndef FILESYSTEM
-#define FILESYSTEM
-#include "./FileSystem.h"
-#endif
-
-#include <fstream>
 #include <iostream>
+#include <string.h>
 using namespace std;
 
 int main() {
-    fstream fs;
-    fs.open("./a.txt", ios::binary | ios::out | ios::in);
-
-    // while(!fs.eof()) {
-    //     char p[2];
-    //     fs.read(p, 1);
-    //     cout << (int)p[0] << endl;
-    // }
-    cout << sizeof(DiskINode) << endl;
-
-    fs.close();
+    char temp[28] = {'a', '!', 0};
+    string p;
+    p = temp;
+    cout << p.length() << endl;
+    cout << p << endl;
 
     return 0;
 }
